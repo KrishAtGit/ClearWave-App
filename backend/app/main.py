@@ -3,9 +3,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from app.api.auth import router as auth_router
 from app.api.routes import router
 from app.config import Settings, get_settings
 from app.db import make_sessionmaker
+from app.mail import ConsoleMailer
 
 # parameter can be either a settings object or none
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -18,6 +20,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # creating the database engine
         engine, app.state.sessionmaker = make_sessionmaker(settings.database_url)
+        # shared by every request: the settings, and whatever sends sign-in links (prints them for now)
+        app.state.settings = settings
+        app.state.mailer = ConsoleMailer()
         # dividing between application startup and shutdown
         yield 
         # dispose the engine 
@@ -42,8 +47,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=['GET', 'POST', 'PATCH', 'DELETE'],
         allow_headers=["Content-Type"],
     )
-    # registering the router
+    # registering the routers
     app.include_router(router)
+    app.include_router(auth_router)
 
     # root endpoint -> endpoint for the root url
     @app.get("/", include_in_schema=False)

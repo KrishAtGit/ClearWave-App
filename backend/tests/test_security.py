@@ -1,6 +1,5 @@
 from app.security import hash_token, new_token
 
-
 def test_tokens_are_unique_and_long() -> None:
     tokens = {new_token() for _ in range(1000)}
     assert len(tokens) == 1000                 

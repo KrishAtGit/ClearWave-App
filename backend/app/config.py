@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://clearwave:clearwave@localhost:5433/clearwave"
     # Where the front end is served from, so the browser may call the API with the session cookie.
     frontend_origin: str = "http://localhost:5173"
+    cookie_secure: bool = False
 
 
 @lru_cache
