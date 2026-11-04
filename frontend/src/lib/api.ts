@@ -40,11 +40,35 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       `${config.method ?? 'GET'} ${path} failed`
     )
   }
+
+  // 204 No Content -> logout replies with 204 no body as .json would crash
+  if (response.status === 204){
+    return undefined as T
+  }
+
   // returning the responses
   return response.json() as Promise<T>
+}
+
+// sends a json body with POST request
+function post<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+}
+
+// the signed-in user, as returned by /api/auth/me
+export interface User {
+  id: string
+  email: string
 }
 
 // creating the api object
 export const api = {
   health: () => request<Health>('/api/health'),
+  me: () => request<User>('/api/auth/me'),
+  requestLink: (email: string) => post<{ message: string }>('/api/auth/request-link', { email }),
+  logout: () => post<void>('/api/auth/logout'),
 }

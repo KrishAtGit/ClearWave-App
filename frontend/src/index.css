@@ -1,78 +1,51 @@
-:root {
-  --bg: #fafaf8;
-  --text: #16161a;
-  --muted: #62626b;
-  --line: #e2e2dc;
-  --ok: #0f7a5c;
-  --bad: #b3261e;
-  --sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color-scheme: light dark;
-}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.account { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--muted); }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f0f12;
-    --text: #ececea;
-    --muted: #9a9aa3;
-    --line: #2a2a30;
-    --ok: #4fd1a5;
-    --bad: #ff8a80;
-  }
+.card {
+  display: grid;
+  gap: 12px;
+  max-width: 420px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
 }
+.card h2 { margin: 0; font-size: 20px; }
+.card p { margin: 0; }
 
-* {
-  box-sizing: border-box;
-}
+label { font-size: 14px; font-weight: 600; }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 16px/1.5 var(--sans);
-  -webkit-font-smoothing: antialiased;
-}
-
-.shell {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 96px 16px;
-}
-
-.eyebrow {
-  margin: 0 0 12px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-h1 {
-  margin: 0 0 16px;
-  font-size: clamp(32px, 6vw, 48px);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.lede {
-  margin: 0 0 32px;
-  font-size: 18px;
-  color: var(--muted);
-}
-
-.status {
-  display: inline-block;
-  margin: 0;
-  padding: 8px 12px;
+input {
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  font-size: 14px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
 }
 
-.status[data-kind='up'] {
-  color: var(--ok);
+button {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--text);
+  color: var(--bg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: progress; }
+button.link {
+  justify-self: start;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-weight: 500;
+  text-decoration: underline;
 }
 
-.status[data-kind='down'] {
-  color: var(--bad);
-}
+input:focus-visible,
+button:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
+
+.hint { font-size: 14px; color: var(--muted); }
+.notice,
+.error { font-size: 14px; color: var(--bad); }
