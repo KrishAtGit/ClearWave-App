@@ -13,6 +13,15 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     cookie_secure: bool = False
 
+    # azurtite published deployment key
+    storage_connection_string: str = (
+        "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;"
+        "AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;"
+        "BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
+    )
+    storage_container: str = "samples"
+    max_upload_mb: int = 20
+
 
 @lru_cache
 def get_settings() -> Settings:
