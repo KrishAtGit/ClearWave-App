@@ -30,3 +30,4 @@ class ClaimOut(BaseModel):
 class ClaimDetail(ClaimOut):
     audio_url: str
 
+
