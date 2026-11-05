@@ -23,6 +23,7 @@ async def get_own_claim(db: DbSession, user: User, claim_id: uuid.UUID) -> Claim
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Claim not found"
         )
+    return claim
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=ClaimOut)

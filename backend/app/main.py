@@ -8,6 +8,8 @@ from app.api.routes import router
 from app.config import Settings, get_settings
 from app.db import make_sessionmaker
 from app.mail import ConsoleMailer
+from app.api.claims import router as claims_router
+from app.storage import BlobAudioStore
 
 # parameter can be either a settings object or none
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -23,10 +25,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # shared by every request: the settings, and whatever sends sign-in links (prints them for now)
         app.state.settings = settings
         app.state.mailer = ConsoleMailer()
+
+        app.state.audio_store=BlobAudioStore(
+            settings.storage_connection_string,
+            settings.storage_container
+        )
         # dividing between application startup and shutdown
         yield 
         # dispose the engine 
         await engine.dispose()
+        await app.state.audio_store.close()
 
     # creating the fastapi application 
     app = FastAPI(
@@ -50,6 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # registering the routers
     app.include_router(router)
     app.include_router(auth_router)
+    app.include_router(claims_router)
 
     # root endpoint -> endpoint for the root url
     @app.get("/", include_in_schema=False)
