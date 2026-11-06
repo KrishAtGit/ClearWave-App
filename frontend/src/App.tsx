@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import SignIn from "./components/SignIn"
 import { ApiError, api , type User } from "./lib/api"
+import UploadClaim from "./components/UploadForm"
 
 type Auth = {kind:'loading'} 
           | {kind : 'signed-out'} 
@@ -61,10 +62,14 @@ export default function App(){
         {auth.kind === 'signed-out' && (
           <>
           <p className="lede">
-            Uplod a sample, find the released songs that use it, reach the people behind them and send a proposal with a payment link attached.
+            Upload a sample, find the released songs that use it, reach the people behind them and send a proposal with a payment link attached.
           </p>
           <SignIn linkExpired={linkExpired}/>
           </>
+        )}
+
+        {auth.kind === 'signed-in' && (
+          <UploadClaim onUploaded={(claim) => console.log('Uploaded', claim)} />
         )}
       </main>
     )
