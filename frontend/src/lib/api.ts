@@ -35,9 +35,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   // if response is unsuccessful
   if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const detail = typeof body?.detail === 'string' ? body.detail : null
     throw new ApiError(
       response.status,
-      `${config.method ?? 'GET'} ${path} failed`
+      detail ?? `${config.method ?? 'GET'} ${path} failed`
     )
   }
 
@@ -59,10 +61,30 @@ function post<T>(path: string, body?: unknown): Promise<T> {
   })
 }
 
+function postForm<T>(path: string, form: FormData): Promise<T> {
+  // no Content-Type header: the browser sets it, including the boundary that separates the parts
+  return request<T>(path, { method: 'POST', body: form })
+}
+
 // the signed-in user, as returned by /api/auth/me
 export interface User {
   id: string
   email: string
+}
+
+export type ClaimStatus = 'uploaded' | 'matching' | 'matched' | 'failed'
+
+export interface Claim{
+  id: string
+  title: string
+  original_filename: string
+  size_bytes: number
+  status: ClaimStatus
+  created_at: string
+}
+
+export interface ClaimDetail extends Claim {
+  audio_url: string
 }
 
 // creating the api object
@@ -71,4 +93,16 @@ export const api = {
   me: () => request<User>('/api/auth/me'),
   requestLink: (email: string) => post<{ message: string }>('/api/auth/request-link', { email }),
   logout: () => post<void>('/api/auth/logout'),
+
+  listClaims: () => request<Claim[]>('/api/claims'),
+  getClaim: (id: string) => request<ClaimDetail>(`/api/claims/${id}`),
+  uploadClaim: (title: string, file: File) => {
+    const form = new FormData()
+    form.append('title', title)
+    form.append('file', file)
+    return postForm<Claim>('/api/claims', form)
+  },
+  deleteClaim: (id: string) => request<void>(`/api/claims/${id}`, {
+    method: 'DELETE'
+  })
 }
