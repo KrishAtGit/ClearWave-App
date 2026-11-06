@@ -8,7 +8,7 @@ class Mailer(Protocol):
 
 class ConsoleMailer:
     async def send_login_link(self, email:str, link:str) -> None:
-        log.warning("Sign-in lik for %s: %s", email, link)
+        log.warning("Sign-in link for %s: %s", email, link)
 
 
         
