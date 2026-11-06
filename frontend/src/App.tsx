@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import SignIn from "./components/SignIn"
 import { ApiError, api , type User } from "./lib/api"
-import UploadClaim from "./components/UploadForm"
+// import UploadClaim from "./components/UploadForm"
+import Dashboard from "./components/Dashboard"
 
 type Auth = {kind:'loading'} 
           | {kind : 'signed-out'} 
@@ -68,9 +69,7 @@ export default function App(){
           </>
         )}
 
-        {auth.kind === 'signed-in' && (
-          <UploadClaim onUploaded={(claim) => console.log('Uploaded', claim)} />
-        )}
+        {auth.kind === 'signed-in' && <Dashboard/>}
       </main>
     )
 }
