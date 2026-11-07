@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey, String, func, Integer
+from sqlalchemy import JSON, Float, DateTime, ForeignKey, String, func, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db import Base
 class User(Base):
@@ -94,5 +94,31 @@ class Claim(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+class Match(Base):
+    __tablename__ = "matches"
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True,
+        default=uuid.uuid4
+    )
+    claim_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("claims.id", ondelete="CASCADE"),
+        index=True
+    )
+    title: Mapped[str] = mapped_column(String(300))
+    artists: Mapped[list[str]] = mapped_column(JSON)
+    album: Mapped[str | None] = mapped_column(String(300))
+    label: Mapped[str | None] = mapped_column(String(300))
+    release_date: Mapped[str| None] = mapped_column(String(10))
+    isrc: Mapped[str | None] = mapped_column(String(20))
+    score: Mapped[int] = mapped_column(Integer)
+    offset_seconds: Mapped[float | None] = mapped_column(Float)
+    spotify_track_id: Mapped[str | None] = mapped_column(String(50))
+    youtube_video_id: Mapped[str | None] = mapped_column(String(50))
+    composers: Mapped[list[str]] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
         server_default=func.now()
     )
