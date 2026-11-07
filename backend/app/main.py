@@ -10,6 +10,7 @@ from app.db import make_sessionmaker
 from app.mail import ConsoleMailer
 from app.api.claims import router as claims_router
 from app.storage import BlobAudioStore
+from app.matching import FakeMatcher
 
 # parameter can be either a settings object or none
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -25,6 +26,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # shared by every request: the settings, and whatever sends sign-in links (prints them for now)
         app.state.settings = settings
         app.state.mailer = ConsoleMailer()
+        app.state.matcher = FakeMatcher()
 
         app.state.audio_store=BlobAudioStore(
             settings.storage_connection_string,

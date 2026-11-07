@@ -1,7 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from typing import Literal
+from pydantic import SecretStr
 
 class Settings(BaseSettings):
     """Configuration, read from environment variables (or a .env file)."""
@@ -21,6 +22,11 @@ class Settings(BaseSettings):
     )
     storage_container: str = "samples"
     max_upload_mb: int = 20
+
+    matcher: Literal["fake", "acrcloud"] = "fake"
+    acr_host: str = ""
+    acr_access_key: str = ""
+    acr_access_secret: SecretStr = SecretStr("")
 
 
 @lru_cache
