@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import StaticPool
+from sqlalchemy import event 
 
 # defining the model base
 # creaes the base class that the db model inherits from
@@ -20,4 +21,14 @@ def make_sessionmaker(database_url: str) -> tuple[AsyncEngine, async_sessionmake
     else:
         # create the engine for other databases, executes when the datase URL doesnt contain ":memory:"
         engine = create_async_engine(database_url, pool_pre_ping=True)
+
+    # PRAGMA foreign_keys=ON lasts only for one connection, so everytime the app opens a new connection its off again
+    # this setting tells SQLite to enforce foreign keys (inc ON DELETE CASCADE) everytime a new connection is opened.
+    if database_url.startswith("sqlite"):
+        @event.listens_for(engine.sync_engine, "connect")
+        def enable_sqlite_fk(dbapi_connection, _connection_record) -> None:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+        
     return engine, async_sessionmaker(engine, expire_on_commit=False)
