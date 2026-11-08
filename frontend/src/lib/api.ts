@@ -83,8 +83,24 @@ export interface Claim{
   created_at: string
 }
 
+export interface Match {
+  id: string,
+  title: string,
+  artists: string[],
+  album: string | null,
+  label: string | null,
+  release_date: string | null,
+  isrc: string | null,
+  score: number,
+  offset_seconds: number | null,
+  spotify_track_id: string | null,
+  youtube_video_id: string | null,
+  composers: string[]
+}
+
 export interface ClaimDetail extends Claim {
   audio_url: string
+  matches: Match[]
 }
 
 // creating the api object
