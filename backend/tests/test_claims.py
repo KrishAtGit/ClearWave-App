@@ -106,4 +106,18 @@ async def test_failed_matching_marks_the_claim_failed(
 
     [listed] = (await client.get("/api/claims")).json()
     assert listed["status"] == "failed"
-    
+
+async def test_claim_detail_includes_matches_best_first(client: AsyncClient, mailer: FakeMailer) -> None:
+    await sign_in(client, mailer, "a@example.com")
+    claim_id = (await upload(client)).json()["id"]
+
+    detail = (await client.get(f"/api/claims/{claim_id}")).json()
+
+    # the fake matcher returns two songs
+    assert len(detail["matches"]) == 2
+    scores = [match["score"] for match in detail["matches"]]
+    assert scores == sorted(scores, reverse=True)
+    for match in detail["matches"]:
+        assert match["title"]
+        assert match["artists"]
+        assert "claim_id" not in match
