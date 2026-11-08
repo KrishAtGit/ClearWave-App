@@ -6,8 +6,8 @@ from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request,Res
 from sqlalchemy import select 
 from app.api.deps import CurrentUser, DbSession
 from app.audio import detect_audio
-from app.models import Claim, User
-from app.schemas import ClaimDetail, ClaimOut
+from app.models import Claim, User, Match
+from app.schemas import ClaimDetail, ClaimOut, MatchOut
 from app.jobs import match_claim
 
 router = APIRouter(prefix='/api/claims', tags=['claims'])
@@ -102,11 +102,15 @@ async def get_claim(
     request: Request
 ) -> ClaimDetail:
     claim = await get_own_claim(db, user, claim_id)
+    matches = await db.scalars(
+        select(Match).where(Match.claim_id == claim.id).order_by(Match.score.desc(), Match.title)
+    )
     audio_url = request.app.state.audio_store.signed_url(claim.audio_key, AUDIO_LINK_LIFETIME)
-    return ClaimDetail(**ClaimOut.model_validate(
-            claim, 
-            from_attributes=True
-        ).model_dump(), audio_url=audio_url)
+    return ClaimDetail(
+        **ClaimOut.model_validate(claim, from_attributes=True).model_dump(),
+        audio_url=audio_url,
+        matches=[MatchOut.model_validate(match, from_attributes=True) for match in matches]
+    )
 
 
 @router.delete("/{claim_id}", status_code=status.HTTP_204_NO_CONTENT)
