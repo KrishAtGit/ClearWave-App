@@ -54,7 +54,7 @@ export default function ClaimsList(
             <ul>
                 {claims.map((claim) => (
                     <li key={claim.id} className="claim">
-                        <div className="hint">
+                        <div className="claim-info">
                             <strong>{claim.title}</strong>
                             <span className="hint">
                                 {claim.original_filename} - {formatSize(claim.size_bytes)} - {" "}
