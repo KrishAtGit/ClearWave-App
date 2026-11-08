@@ -10,7 +10,20 @@ from app.db import make_sessionmaker
 from app.mail import ConsoleMailer
 from app.api.claims import router as claims_router
 from app.storage import BlobAudioStore
-from app.matching import FakeMatcher
+from app.matching import FakeMatcher, Matcher
+from app.acrcloud import ACRCloudMatcher
+
+def make_matcher(settings: Settings) -> Matcher:
+    if settings.matcher == "fake":
+        return FakeMatcher()
+    secret = settings.acr_access_secret.get_secret_value()
+    if not (settings.acr_host and settings.acr_access_key and secret):
+        raise RuntimeError("CLEARWAVE_MATCHER=acrcloud needs ACR_HOST, ACR_ACCESS_KEY and ACR_ACCESS_SECRET")
+    return ACRCloudMatcher(
+        settings.acr_host,
+        settings.acr_access_key,
+        secret
+    )
 
 # parameter can be either a settings object or none
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,7 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # shared by every request: the settings, and whatever sends sign-in links (prints them for now)
         app.state.settings = settings
         app.state.mailer = ConsoleMailer()
-        app.state.matcher = FakeMatcher()
+        app.state.matcher = make_matcher(settings)
 
         app.state.audio_store=BlobAudioStore(
             settings.storage_connection_string,
@@ -34,6 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         # dividing between application startup and shutdown
         yield 
+        await app.state.matcher.close()
         # dispose the engine 
         await engine.dispose()
         await app.state.audio_store.close()

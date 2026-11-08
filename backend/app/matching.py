@@ -21,6 +21,7 @@ class MatcherError(Exception):
 
 class Matcher(Protocol):
     async def find_matches(self, audio: bytes) -> list[SongMatch]: ...
+    async def close(self) -> None: ...
 
 class FakeMatcher:
     # this returns the same made-up songs everytime, so dev and tests never call the acrcloud
@@ -49,3 +50,4 @@ class FakeMatcher:
                 offset_seconds=12.0,
             )
         ]
+    async def close(self) -> None: ...
