@@ -2,12 +2,13 @@ import uuid
 from datetime import timedelta
 from typing import Annotated
 from azure.core.exceptions import AzureError
-from fastapi import APIRouter, Form, HTTPException, Request,Response, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Request,Response, UploadFile, status
 from sqlalchemy import select 
 from app.api.deps import CurrentUser, DbSession
 from app.audio import detect_audio
 from app.models import Claim, User
 from app.schemas import ClaimDetail, ClaimOut
+from app.jobs import match_claim
 
 router = APIRouter(prefix='/api/claims', tags=['claims'])
 
@@ -31,6 +32,7 @@ async def create_claim(
         user: CurrentUser,
         db: DbSession,
         request: Request,
+        background_tasks: BackgroundTasks,
         title: Annotated[str, Form(min_length=1, max_length=200)],
         file: UploadFile
 ) -> Claim:
@@ -75,6 +77,14 @@ async def create_claim(
         await store.delete(key)
         raise
     await db.refresh(claim)
+
+    background_tasks.add_task(
+        match_claim,
+        request.app.state.sessionmaker,
+        request.app.state.matcher,
+        claim.id, 
+        data,
+    )
     return claim
 
 @router.get("", response_model=list[ClaimOut])

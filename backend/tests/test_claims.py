@@ -1,10 +1,10 @@
 from urllib.parse import urlsplit
-
 from httpx import AsyncClient
-
 from app.security import SESSION_COOKIE
 from app.storage import MemoryAudioStore
 from tests.conftest import FakeMailer
+import pytest
+from app.matching import FakeMatcher, MatcherError
 
 # The smallest valid-looking WAV header: enough for the server to recognise it as audio.
 WAV = b"RIFF\x24\x00\x00\x00WAVEfmt " + b"\x00" * 64
@@ -84,3 +84,26 @@ async def test_delete_removes_the_claim_and_its_file(
 async def test_claims_need_sign_in(client: AsyncClient) -> None:
     assert (await client.get("/api/claims")).status_code == 401
     assert (await upload(client)).status_code == 401
+
+async def test_upload_runs_matching(client: AsyncClient, mailer: FakeMailer) -> None:
+    await sign_in(client, mailer, "wow@example.com")
+    claim = (await upload(client)).json
+    [listed] = (await client.get("/api/claims")).json()
+    assert listed["status"] == "matched"
+
+async def test_failed_matching_marks_the_claim_failed(
+        client: AsyncClient,
+        mailer: FakeMailer,
+        matcher: FakeMatcher,
+        monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def broken(audio: bytes) -> list:
+        raise MatcherError("SERVICE DOWN")
+
+    monkeypatch.setattr(matcher, "find_matches", broken)
+    await sign_in(client, mailer, "wow@example.com")
+    await upload(client)
+
+    [listed] = (await client.get("/api/claims")).json()
+    assert listed["status"] == "failed"
+    
