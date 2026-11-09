@@ -16,9 +16,10 @@ function formatSize(bytes: number): string{
 }
 
 export default function ClaimsList(
-    { claims, onDeleted } : { 
+    { claims, onDeleted, onOpen } : { 
         claims: Claim[]; 
         onDeleted: (id: string) => void;
+        onOpen: (id: string) => void;
     }
 ) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export default function ClaimsList(
                 {claims.map((claim) => (
                     <li key={claim.id} className="claim">
                         <div className="claim-info">
-                            <strong>{claim.title}</strong>
+                            <button className="link claim-title" type="button" onClick={() => onOpen(claim.id)}> {claim.title}</button>
                             <span className="hint">
                                 {claim.original_filename} - {formatSize(claim.size_bytes)} - {" "}
                                 {new Date(claim.created_at).toLocaleDateString()}

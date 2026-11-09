@@ -188,3 +188,71 @@ button:focus-visible {
   color: var(--bad);
   border-color: var(--bad);
 }
+
+.claim-title {
+  text-align: left;
+  font-weight: 700;
+  text-decoration: none;
+}
+.claim-title:hover {
+  text-decoration: underline;
+}
+
+.claim-page {
+  display: grid;
+  gap: 16px;
+}
+.claim-page header {
+  display: grid;
+  gap: 2px;
+}
+.claim-page h2,
+.claim-page h3 {
+  margin: 0;
+}
+.claim-page audio {
+  width: 100%;
+}
+
+.songs {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.song {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.song p {
+  margin: 0;
+}
+.song-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+.song-head div {
+  display: grid;
+}
+.score {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ok);
+  white-space: nowrap;
+}
+.song-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.song-links a {
+  color: inherit;
+  font-weight: 600;
+}
