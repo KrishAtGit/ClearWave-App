@@ -97,6 +97,24 @@ export default function ClaimPage({
     };
   }, [claimId]);
 
+  async function refreshAudioLink(){
+    try{
+        const fresh = await api.getClaim(claimId);
+        setState((prev) => {
+            if(prev.kind === 'ready'){
+                return {kind: "ready", claim: {
+                    ...prev.claim, audio_url: fresh.audio_url
+                }};
+            }
+            return prev;
+        });
+
+    }
+    catch(err){
+        console.error("Refreshing the audio link failed: ", err);
+    }
+  }
+
   if (state.kind === "loading") {
     return <p className="hint">Loading...</p>;
   }
@@ -126,7 +144,7 @@ export default function ClaimPage({
         <p className="hint">{claim.original_filename}</p>
       </header>
 
-      <audio controls preload="none" src={claim.audio_url} />
+      <audio controls preload="none" src={claim.audio_url} onError={refreshAudioLink}/>
 
       {isWorking(claim.status) && (
         <p className="hint" aria-live="polite">
