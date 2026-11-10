@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   api,
   type ClaimDetail,
@@ -52,6 +52,7 @@ export default function ClaimPage({
   onBack: () => void;
 }) {
   const [state, setState] = useState<PageState>({ kind: "loading" });
+  const refreshedAudio = useRef(false);
 
   useEffect(() => {
     let ignore = false;
@@ -98,6 +99,9 @@ export default function ClaimPage({
   }, [claimId]);
 
   async function refreshAudioLink(){
+    if (refreshedAudio.current)
+        return
+    refreshedAudio.current = true;
     try{
         const fresh = await api.getClaim(claimId);
         setState((prev) => {
