@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import JSON, Float, DateTime, ForeignKey, String, func, Integer
+from sqlalchemy import JSON, Float, DateTime, ForeignKey, String, func, Integer, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db import Base
 class User(Base):
@@ -118,6 +118,8 @@ class Match(Base):
     spotify_track_id: Mapped[str | None] = mapped_column(String(50))
     youtube_video_id: Mapped[str | None] = mapped_column(String(50))
     composers: Mapped[list[str]] = mapped_column(JSON, default=list)
+    streams: Mapped[int | None] = mapped_column(BigInteger)
+    share_percent: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
         server_default=func.now()

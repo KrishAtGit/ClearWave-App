@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     acr_access_key: str = ""
     acr_access_secret: SecretStr = SecretStr("")
 
+    # average pay out per stream in us bucks
+    payout_per_stream: float = 0.004
+
 
 @lru_cache
 def get_settings() -> Settings:

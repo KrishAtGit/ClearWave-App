@@ -1,6 +1,6 @@
 from typing import Literal
 import uuid 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
 # health check endpoint return to frontend values
@@ -41,10 +41,31 @@ class MatchOut(BaseModel):
     spotify_track_id: str | None
     youtube_video_id: str | None
     composers: list[str]
-    
+    streams: int | None
+    share_percent: float | None
+    estimated_value: float | None = None 
+
 class ClaimDetail(ClaimOut):
     audio_url: str
     matches: list[MatchOut]
+    audio_url: str
+    matches: list[MatchOut]
+    payout_per_stream: float
+    payout_source: str
+
+class EstimateIn(BaseModel):
+    # ge = greater than or eq, le = less than or eq
+    # anything outside of [0, 100,000,000,000] is rejected
+    streams: int | None = Field(
+        default=None,
+        ge=0,
+        le=100_000_000_000
+    )
+    share_percent: float | None = Field(
+        default=None,
+        ge=0,
+        le=100
+    )
 
 
 

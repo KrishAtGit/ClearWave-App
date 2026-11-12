@@ -7,8 +7,9 @@ from sqlalchemy import select
 from app.api.deps import CurrentUser, DbSession
 from app.audio import detect_audio
 from app.models import Claim, User, Match
-from app.schemas import ClaimDetail, ClaimOut, MatchOut
+from app.schemas import ClaimDetail, ClaimOut, MatchOut, EstimateIn
 from app.jobs import match_claim
+from app.royalties import PAYOUT_SOURCE, estimate_value
 
 router = APIRouter(prefix='/api/claims', tags=['claims'])
 
@@ -26,6 +27,12 @@ async def get_own_claim(db: DbSession, user: User, claim_id: uuid.UUID) -> Claim
         )
     return claim
 
+# helper - builds api of a match with its estimate calculated from stored inputs
+def to_match_out(match: Match, payout_per_stream: float) -> MatchOut:
+    out = MatchOut.model_validate(match, from_attributes=True)
+    return out.model_copy(
+        update={"estimated_value": estimate_value(match.streams, match.share_percent, payout_per_stream)}
+    )
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=ClaimOut)
 async def create_claim(
@@ -106,12 +113,35 @@ async def get_claim(
         select(Match).where(Match.claim_id == claim.id).order_by(Match.score.desc(), Match.title)
     )
     audio_url = request.app.state.audio_store.signed_url(claim.audio_key, AUDIO_LINK_LIFETIME)
+    payout = request.app.state.settings.payout_per_stream
     return ClaimDetail(
         **ClaimOut.model_validate(claim, from_attributes=True).model_dump(),
         audio_url=audio_url,
-        matches=[MatchOut.model_validate(match, from_attributes=True) for match in matches]
+        matches=[to_match_out(match, payout) for match in matches], 
+        payout_per_stream=payout,
+        payout_source=PAYOUT_SOURCE,   
     )
 
+@router.patch("/{claim_id}/matches/{match_id}", response_model=MatchOut)
+async def update_match_estimate(
+    claim_id: uuid.UUID,
+    match_id: uuid.UUID,
+    body: EstimateIn,
+    user: CurrentUser,
+    db: DbSession,
+    request: Request,
+) -> MatchOut:
+    claim = await get_own_claim(db, user, claim_id)
+    match = await db.scalar(select(Match).where(Match.id == match_id, Match.claim_id == claim.id))
+    if match is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Match not found"
+        )
+    match.streams = body.streams
+    match.share_percent = body.share_percent
+    await db.commit()
+    return to_match_out(match, request.app.state.settings.payout_per_stream)
 
 @router.delete("/{claim_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_claim(

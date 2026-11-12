@@ -121,3 +121,47 @@ async def test_claim_detail_includes_matches_best_first(client: AsyncClient, mai
         assert match["title"]
         assert match["artists"]
         assert "claim_id" not in match
+
+async def test_user_can_set_an_estimate_on_their_match(client: AsyncClient, mailer: FakeMailer) -> None:
+    await sign_in(client, mailer, "a@example.com")
+    claim_id = (await upload(client)).json()["id"]
+    detail = (await client.get(f"/api/claims/{claim_id}")).json()
+    match_id = detail["matches"][0]["id"]
+    assert detail["payout_per_stream"] == 0.004
+    assert detail["matches"][0]["estimated_value"] is None
+
+    response = await client.patch(
+        f"/api/claims/{claim_id}/matches/{match_id}",
+        json={"streams": 1_000_000, "share_percent": 50},
+    )
+    assert response.status_code == 200
+    # 1,000,000 x 0.004 x 50% = 2000
+    assert response.json()["estimated_value"] == 2000.0
+
+    # saved: opening the claim again shows the same estimate
+    detail = (await client.get(f"/api/claims/{claim_id}")).json()
+    saved = next(m for m in detail["matches"] if m["id"] == match_id)
+    assert saved["streams"] == 1_000_000
+
+
+async def test_estimate_inputs_are_validated(client: AsyncClient, mailer: FakeMailer) -> None:
+    await sign_in(client, mailer, "a@example.com")
+    claim_id = (await upload(client)).json()["id"]
+    match_id = (await client.get(f"/api/claims/{claim_id}")).json()["matches"][0]["id"]
+
+    url = f"/api/claims/{claim_id}/matches/{match_id}"
+    assert (await client.patch(url, json={"streams": -5, "share_percent": 10})).status_code == 422
+    assert (await client.patch(url, json={"streams": 100, "share_percent": 150})).status_code == 422
+
+
+async def test_cannot_edit_another_users_match(client: AsyncClient, mailer: FakeMailer) -> None:
+    await sign_in(client, mailer, "a@example.com")
+    claim_id = (await upload(client)).json()["id"]
+    match_id = (await client.get(f"/api/claims/{claim_id}")).json()["matches"][0]["id"]
+
+    await sign_in(client, mailer, "b@example.com")
+    response = await client.patch(
+        f"/api/claims/{claim_id}/matches/{match_id}",
+        json={"streams": 1, "share_percent": 1},
+    )
+    assert response.status_code == 404
