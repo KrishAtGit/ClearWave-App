@@ -10,3 +10,4 @@ __pycache__/
 
 # local audio files for manual testing
 test-audio/
+commands.txt
