@@ -61,6 +61,15 @@ function post<T>(path: string, body?: unknown): Promise<T> {
   })
 }
 
+// patch helper - sends a json body with patch: "change part of an existing thing"
+function patch<T>(path: string, body: unknown): Promise<T>{
+  return request<T>(path, {
+    method: 'PATCH',
+    headers: { 'Content-Type' : 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
 function postForm<T>(path: string, form: FormData): Promise<T> {
   // no Content-Type header: the browser sets it, including the boundary that separates the parts
   return request<T>(path, { method: 'POST', body: form })
@@ -86,21 +95,26 @@ export interface Claim{
 export interface Match {
   id: string,
   title: string,
-  artists: string[],
+  artists: string[]
   album: string | null,
-  label: string | null,
-  release_date: string | null,
-  isrc: string | null,
-  score: number,
-  offset_seconds: number | null,
-  spotify_track_id: string | null,
-  youtube_video_id: string | null,
+  label: string | null
+  release_date: string | null
+  isrc: string | null
+  score: number
+  offset_seconds: number | null
+  spotify_track_id: string | null
+  youtube_video_id: string | null
   composers: string[]
+  streams: number | null
+  share_percent: number | null
+  estimated_value: number | null
 }
 
 export interface ClaimDetail extends Claim {
   audio_url: string
   matches: Match[]
+  payout_per_stream: number
+  payout_source: string
 }
 
 // creating the api object
@@ -120,5 +134,10 @@ export const api = {
   },
   deleteClaim: (id: string) => request<void>(`/api/claims/${id}`, {
     method: 'DELETE'
-  })
+  }),
+  updateEstimate: (claimId: string, matchId: string, streams: number, sharePercent: number) =>
+    patch<Match>(`/api/claims/${claimId}/matches/${matchId}`, {
+      streams,
+      share_percent: sharePercent,
+    }),
 }

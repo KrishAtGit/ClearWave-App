@@ -5,7 +5,7 @@ import {
   type ClaimStatus,
   type Match,
 } from "../lib/api";
-
+import EstimateForm from "./EstimateForm";
 // how often to re-check while matching is running
 const POLL_MS = 2000;
 
@@ -119,6 +119,17 @@ export default function ClaimPage({
     }
   }
 
+  // swap the saved match into the claim, so the card shows the new estimate
+  function handleMatchSaved(updated: Match) {
+    setState((prev) => {
+      if (prev.kind === "ready") {
+        const matches = prev.claim.matches.map((match) => (match.id === updated.id ? updated : match));
+        return { kind: "ready", claim: { ...prev.claim, matches } };
+      }
+      return prev;
+    });
+  }
+
   if (state.kind === "loading") {
     return <p className="hint">Loading...</p>;
   }
@@ -171,7 +182,14 @@ export default function ClaimPage({
           </h3>
           <ul className="songs">
             {songs.map((group) => (
-              <SongCard key={group.main.id} group={group} />
+              <SongCard 
+              key={group.main.id} 
+              group={group} 
+              claimId={claim.id}
+              payoutPerStream={claim.payout_per_stream}
+              payoutSource={claim.payout_source}
+              onSaved={handleMatchSaved}
+              />
             ))}
           </ul>
         </>
@@ -180,7 +198,19 @@ export default function ClaimPage({
   );
 }
 
-function SongCard({ group }: { group: SongGroup }) {
+function SongCard({
+  group,
+  claimId,
+  payoutPerStream,
+  payoutSource,
+  onSaved,
+}: {
+  group: SongGroup;
+  claimId: string;
+  payoutPerStream: number;
+  payoutSource: string;
+  onSaved: (updated: Match) => void;
+}) {
   const { main, otherReleases } = group;
   // "The Album · Some Label · 2015", skipping whatever is missing
   const details = [main.album, main.label, main.release_date?.slice(0, 4)]
@@ -235,6 +265,14 @@ function SongCard({ group }: { group: SongGroup }) {
           {otherReleases.length === 1 ? "release" : "releases"}
         </p>
       )}
+      <EstimateForm
+        claimId={claimId}
+        match={main}
+        payoutPerStream={payoutPerStream}
+        payoutSource={payoutSource}
+        onSaved={onSaved}
+      />
+
     </li>
   );
 }

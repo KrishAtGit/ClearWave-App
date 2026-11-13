@@ -256,3 +256,40 @@ button:focus-visible {
   color: inherit;
   font-weight: 600;
 }
+
+.estimate {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.estimate h4 {
+  margin: 0;
+  font-size: 15px;
+}
+/* two inputs side by side, stacking on narrow screens */
+.estimate-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+.field {
+  display: grid;
+  gap: 4px;
+}
+.estimate-result {
+  display: grid;
+  gap: 4px;
+}
+.estimate-total {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ok);
+}
+.estimate summary {
+  cursor: pointer;
+}
+.hint a {
+  color: inherit;
+}
