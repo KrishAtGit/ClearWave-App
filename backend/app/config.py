@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     acr_access_key: str = ""
     acr_access_secret: SecretStr = SecretStr("")
 
+    mailer: Literal["console", "resend"] = "console"
+    resend_api_key: SecretStr = SecretStr("")
+    mail_from: str = "ClearWave <onboarding@resend.dev>"
+
     # average pay out per stream in us bucks
     payout_per_stream: float = 0.004
 

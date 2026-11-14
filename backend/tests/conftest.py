@@ -20,6 +20,9 @@ class FakeMailer:
     async def send_login_link(self, email: str, link: str) -> None:
         self.links.append(link)
 
+    async def close(self) -> None:
+        pass
+
 
 @pytest.fixture
 def mailer() -> FakeMailer:

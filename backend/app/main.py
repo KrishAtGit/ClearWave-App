@@ -12,6 +12,7 @@ from app.api.claims import router as claims_router
 from app.storage import BlobAudioStore
 from app.matching import FakeMatcher, Matcher
 from app.acrcloud import ACRCloudMatcher
+from app.mail import ConsoleMailer, Mailer, ResendMailer
 
 def make_matcher(settings: Settings) -> Matcher:
     if settings.matcher == "fake":
@@ -24,6 +25,14 @@ def make_matcher(settings: Settings) -> Matcher:
         settings.acr_access_key,
         secret
     )
+
+def make_mailer(settings: Settings) -> Mailer:
+    if settings.mailer == "console":
+        return ConsoleMailer()
+    key = settings.resend_api_key.get_secret_value()
+    if not key:
+        raise RuntimeError("CLEARWAVE_MAILER=resend needs CLEARWAVE_RESEND_API_KEY")
+    return ResendMailer(key, settings.mail_from)
 
 # parameter can be either a settings object or none
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -38,7 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine, app.state.sessionmaker = make_sessionmaker(settings.database_url)
         # shared by every request: the settings, and whatever sends sign-in links (prints them for now)
         app.state.settings = settings
-        app.state.mailer = ConsoleMailer()
+        app.state.mailer = make_mailer(settings)
         app.state.matcher = make_matcher(settings)
 
         app.state.audio_store=BlobAudioStore(
@@ -51,6 +60,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # dispose the engine 
         await engine.dispose()
         await app.state.audio_store.close()
+        await app.state.mailer.close()
 
     # creating the fastapi application 
     app = FastAPI(
@@ -75,6 +85,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router)
     app.include_router(auth_router)
     app.include_router(claims_router)
+
 
     # root endpoint -> endpoint for the root url
     @app.get("/", include_in_schema=False)

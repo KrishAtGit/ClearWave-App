@@ -1,9 +1,8 @@
 from typing import Annotated
-
-from fastapi import APIRouter, Cookie, Request, Response, status
+from fastapi import APIRouter, Cookie, Request, Response, status, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy import delete, select, update
-
+from app.mail import MailError
 from app.api.deps import CurrentUser, DbSession
 from app.models import LoginToken, Session, User
 from app.schemas import LinkRequest, Message, UserOut
@@ -15,6 +14,7 @@ from app.security import (
     new_token,
     now,
 )
+
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -34,7 +34,12 @@ async def request_link(body: LinkRequest, request: Request, db: DbSession) -> Me
     await db.commit()
 
     link = f"{request.app.state.settings.frontend_origin}/api/auth/verify?token={token}"
-    await request.app.state.mailer.send_login_link(email, link)
+    
+    try:
+        await request.app.state.mailer.send_login_link(email, link)
+    except MailError:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Could not send the email. Please try again.")
+    
     return Message(message="Check your email for a sign-in link.")
 
 
@@ -91,3 +96,4 @@ async def logout(
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.delete_cookie(SESSION_COOKIE)
     return response
+
