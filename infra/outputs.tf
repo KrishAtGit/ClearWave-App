@@ -33,5 +33,10 @@ output "db_setup_sql" {
     REVOKE ALL ON DATABASE ${azurerm_postgresql_flexible_server_database.app.name} FROM PUBLIC;
     GRANT CONNECT ON DATABASE lockedin TO ${data.azurerm_postgresql_flexible_server.shared.administrator_login};
     REVOKE CONNECT ON DATABASE lockedin FROM PUBLIC;
+    -- Azure creates the database's public schema owned by its admin, so hand it over too,
+    -- or migrations fail with "permission denied for schema public".
+    \connect ${azurerm_postgresql_flexible_server_database.app.name}
+    ALTER SCHEMA public OWNER TO ${local.db_user};
+    GRANT ALL ON SCHEMA public TO ${local.db_user};
   EOT
 }
