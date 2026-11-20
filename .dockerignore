@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.env
+frontend/dist
+backend/tests
+test-audio
+commands.txt
+
