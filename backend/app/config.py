@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     # average pay out per stream in us bucks
     payout_per_stream: float = 0.004
 
+    # folder holding the built frontend (frontend/dist)
+    # set only in the docker image, in dev Vite serves the frontend instead
+    static_dir: Path | None = None
+
 
 @lru_cache
 def get_settings() -> Settings:

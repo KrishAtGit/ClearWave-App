@@ -1,8 +1,9 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from app.api.auth import router as auth_router
 from app.api.routes import router
 from app.config import Settings, get_settings
@@ -13,6 +14,7 @@ from app.storage import BlobAudioStore
 from app.matching import FakeMatcher, Matcher
 from app.acrcloud import ACRCloudMatcher
 from app.mail import ConsoleMailer, Mailer, ResendMailer
+
 
 def make_matcher(settings: Settings) -> Matcher:
     if settings.matcher == "fake":
@@ -88,9 +90,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
     # root endpoint -> endpoint for the root url
-    @app.get("/", include_in_schema=False)
-    async def root() -> RedirectResponse:
-        return RedirectResponse("/docs")
+    if settings.static_dir:
+        static = settings.static_dir.resolve()
+        app.mount("/assets", StaticFiles(directory=static / "assets"), name="assets")
+
+        @app.get("/{path:path}", include_in_schema=False)
+        async def frontend(path: str) -> FileResponse:
+            if path.startswith("api/"):
+                raise HTTPException(status_code=404, detail="Not Found")
+            file = (static / path).resolve()
+            if path and file.is_file() and file.is_relative_to(static):
+                return FileResponse(file)
+            return FileResponse(static/"index.html")
+    else:
+        @app.get("/", include_in_schema=False)
+        async def root() -> RedirectResponse:
+            return RedirectResponse("/docs")
 
     return app
 
