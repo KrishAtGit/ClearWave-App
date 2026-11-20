@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars (which git ignores) and fill in.
+subscription_id   = "00000000-0000-0000-0000-000000000000"
+db_server_name    = "lockedin-db-xxxxx"
+acr_host          = "identify-xx-xxxx-x.acrcloud.com"
+acr_access_key    = ""
+acr_access_secret = ""
+# Optional: leave out to log sign-in links instead of emailing them.
+# resend_api_key = "re_..."
